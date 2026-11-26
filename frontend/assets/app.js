@@ -28,15 +28,37 @@ document.addEventListener("DOMContentLoaded",async()=>{
 
 function initHeroSlider(){
   const slides=[...document.querySelectorAll('.hero-slide')];
-  if(slides.length<2) return;
-  let i=0;
   const reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  if(slides.length>1 && !reduce){
+    let i=0;
+    setInterval(()=>{
+      slides[i].classList.remove('active');
+      i=(i+1)%slides.length;
+      slides[i].classList.add('active');
+    },3500);
+  }
+  initChichewaRotator(reduce);
+}
+
+function initChichewaRotator(reduce){
+  const el=document.getElementById('chichewa-text');
+  if(!el) return;
+  const lines=[
+    "Kodi muli bwino?","Kodi mungakonde kuyesa chiyani lero?","Kodi mukufuna kukongola kotani?","Kodi mukufunanso kukula kwanji?","Kodi mukufuna mtundu uti?","Kodi tingakuthandizeni kusankha?","Kodi mwakonzeka kuvala mokongola?","Kodi mukufuna zovala za tsiku liti?","Kodi mukufuna kuoneka mwachidaliro?","Kodi tikutumizireni zomwe mwakonda?","Muli bwanji lero?","Takulandirani ku Tahira's Closset.","Mwakulandiridwa ndi manja awiri.","Zikomo kwambiri chifukwa chobwera.","Ndife okondwa kukuthandizani.","Mutha kutifunsa chilichonse.","Tili pano kukuthandizani.","Sankhani zomwe mukuzikonda.","Valani zomwe zimakupatsani chidaliro.","Khalani omasuka kufunsa.","Timakonda kukuthandizani.","Lumikizanani nafe pa WhatsApp.","Tiyankhula nanu posachedwa.","Zovala zabwino zimapezeka apa.","Mutha kuwona zatsopano lero.","Tengani nthawi yanu kusankha.","Muli ndi kukoma kwabwino.","Tikuyembekezera uthenga wanu.","Tithandizeni kudziwa zomwe mukufuna.","Zikomo chifukwa chotisankha ife."
+  ];
+  let i=0;
+  const set=(n,animate=true)=>{
+    el.classList.remove('chichewa-in');
+    if(animate && !reduce){
+      el.classList.add('chichewa-out');
+      setTimeout(()=>{ el.textContent=lines[n]; el.classList.remove('chichewa-out'); el.classList.add('chichewa-in'); }, 220);
+    } else {
+      el.textContent=lines[n];
+    }
+  };
+  set(0,false);
   if(reduce) return;
-  setInterval(()=>{
-    slides[i].classList.remove('active');
-    i=(i+1)%slides.length;
-    slides[i].classList.add('active');
-  },3500);
+  setInterval(()=>{ i=(i+1)%lines.length; set(i,true); }, 3200);
 }
 
 let homeProductsCache=null;
