@@ -11,6 +11,7 @@ document.addEventListener("DOMContentLoaded",async()=>{
   document.getElementById("hamb")?.addEventListener("click",()=>document.getElementById("nav")?.classList.toggle("show"));
   document.getElementById("year")&&(document.getElementById("year").textContent=new Date().getFullYear());
   initHeroSlider();
+  initHomeTabs();
   document.querySelectorAll('.nav-link[data-section]').forEach(a=>a.addEventListener('click',e=>{e.preventDefault();showSection(a.dataset.section)}));
   if(document.getElementById("featured"))loadFeatured();
   if(document.getElementById("shop-grid"))loadShop();
@@ -36,6 +37,63 @@ function initHeroSlider(){
     i=(i+1)%slides.length;
     slides[i].classList.add('active');
   },3500);
+}
+
+let homeProductsCache=null;
+function initHomeTabs(){
+  const tabs=[...document.querySelectorAll('[data-home-tab]')];
+  const panels=[...document.querySelectorAll('[data-home-panel]')];
+  if(!tabs.length || !panels.length) return;
+  const showTab=(name,push=true)=>{
+    panels.forEach(p=>{p.style.display = (p.dataset.homePanel===name)?'':'none'});
+    tabs.forEach(a=>a.classList.toggle('active', a.dataset.homeTab===name));
+    document.getElementById('nav')?.classList.remove('show');
+    if(name==='shop' || name==='new') ensureHomeProducts(name);
+    if(push){ const hash=name==='home'?'#home':`#${name}`; history.replaceState(null,'',hash); }
+    window.scrollTo({top:0,behavior:'smooth'});
+  };
+  tabs.forEach(a=>{
+    a.addEventListener('click',e=>{
+      const tab=a.dataset.homeTab;
+      if(!tab) return;
+      // Shop/new/contact/about are handled as in-page tabs on home
+      if(['home','shop','new','about','contact'].includes(tab)){
+        e.preventDefault();
+        showTab(tab);
+      }
+    });
+  });
+  const initial=(location.hash||'#home').replace('#','');
+  const valid=['home','shop','new','about','contact'];
+  showTab(valid.includes(initial)?initial:'home',false);
+}
+async function ensureHomeProducts(tab){
+  if(!homeProductsCache){
+    try{ homeProductsCache=await api('/products'); }catch(e){ homeProductsCache=[]; }
+    currentProducts=homeProductsCache;
+    const cats=[...new Set(homeProductsCache.map(p=>p.category).filter(Boolean))];
+    const sel=document.getElementById('home-category');
+    if(sel) sel.innerHTML='<option value="">All categories</option>'+cats.map(c=>`<option>${esc(c)}</option>`).join('');
+  } else { currentProducts=homeProductsCache; }
+  if(tab==='shop') renderHomeShop();
+  if(tab==='new') renderHomeNew();
+}
+function renderHomeShop(){
+  const grid=document.getElementById('home-shop-grid'); if(!grid) return;
+  let ps=[...(homeProductsCache||[])];
+  const q=(document.getElementById('home-search')?.value||'').toLowerCase();
+  const cat=document.getElementById('home-category')?.value||'';
+  const sort=document.getElementById('home-sort')?.value||'recent';
+  ps=ps.filter(p=>{const hay=(p.name+' '+p.description+' '+p.category+' '+(p.sku||'')).toLowerCase(); return hay.includes(q)&&(!cat||p.category===cat)});
+  if(sort==='price-low')ps.sort((a,b)=>(a.sale_price??a.price)-(b.sale_price??b.price));
+  if(sort==='price-high')ps.sort((a,b)=>(b.sale_price??b.price)-(a.sale_price??a.price));
+  grid.innerHTML=ps.map(card).join('')||emptyProducts();
+}
+function renderHomeNew(){
+  const grid=document.getElementById('home-new-grid'); if(!grid) return;
+  let ps=[...(homeProductsCache||[])];
+  ps.sort((a,b)=>Number(b.id)-Number(a.id));
+  grid.innerHTML=ps.slice(0,8).map(card).join('')||emptyProducts();
 }
 
 function card(p){const st=p.stock<=0?'OUT_OF_STOCK':(p.low_stock_variants>0?'LOW_STOCK':'IN_STOCK');return `<article class="product-card"><a href="/product?id=${p.id}" class="product-photo">${img(p)}${p.stock<=0?'<span class="sold">Sold out</span>':''}</a><div class="product-info"><p class="eyebrow" style="margin-bottom:4px">${esc(p.category||'')}</p><h3>${esc(p.name)}</h3><div>${money(p.sale_price??p.price)}${p.sale_price?`<span class="old-price">${money(p.price)}</span>`:""}</div><div class="muted small">${p.stock>0?`${p.stock} available`:'Currently unavailable'}</div><div class="product-actions"><a class="btn" href="/product?id=${p.id}" style="border:1px solid var(--line)">Details</a><button class="btn primary" ${p.stock<=0?"disabled":""} onclick="addCart(${p.id})">Add to bag</button></div></div></article>`}
