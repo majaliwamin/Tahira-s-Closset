@@ -48,7 +48,7 @@ function initHeroSlider(){
 async function initChichewaRotator(reduce){
   const el=document.getElementById('chichewa-text');
   if(!el) return;
-  let lines=["Kodi inu muli bwino?","Kodi mungakonde kuyesa chovala chanji lero?","Kodi mukufuna saizi yanji?","Kodi mukukonda mtundu wanji?","Kodi mukufuna zovala za mwambo uti?","Kodi tingakuthandizeni kusankha zovala?","Kodi mukufuna kuoneka motani lero?","Kodi mwayesa kale kalembedwe kameneka?","Kodi mukufuna kuti tikutumizireni zithunzi zina?","Kodi mukufuna kugula tsopano kapena mufunsa kaye?","Kodi mukufuna zovala za tsiku lapadera?","Takulandirani ku Tahira's Closset.","Ndife okondwa kukuonani pano.","Mutha kusankha zomwe mukuzikonda.","Tili pano kukuthandizani nthawi iliyonse.","Valani zomwe zimakupatsani chidaliro.","Khalani omasuka kutifunsa mafunso.","Tili ndi zovala zokongola kwa inu.","Sankhani kalembedwe komwe kakugwirizana nanu.","Titha kukuthandizani kupeza saizi yoyenera.","Lumikizanani nafe pa WhatsApp mosavuta.","Tikuyankhani mwachangu momwe tingathere.","Onani zatsopano zomwe zalowa lero.","Zovala zathu zasankhidwa mosamala.","Mutha kutitumizira uthenga nthawi iliyonse.","Tikukuthokozani chifukwa chotichezera.","Khalani ndi tsiku labwino komanso lokongola.","Tiyeni tikuthandizeni kupeza zomwe mukufuna.","Mtundu uliwonse ukusonyeza umunthu wanu.","Timayamikira kukoma kwanu.","Tikufunirani zabwino pamene mukusankha."];
+  let lines=["Kodi inu zabwino ai?","Kodi mungakonde kuyesa chovala chanji lero?","Kodi mukufuna saizi yanji?","Kodi mukukonda mtundu wanji?","Kodi mukufuna zovala za mwambo uti?","Kodi tingakuthandizeni kusankha zovala?","Kodi mukufuna kuoneka motani lero?","Kodi mwayesa kale kalembedwe kameneka?","Kodi mukufuna kuti tikutumizireni zithunzi zina?","Kodi mukufuna kugula tsopano kapena mufunsa kaye?","Kodi mukufuna zovala za tsiku lapadera?","Takulandirani ku Tahira's Closset.","Ndife okondwa kukuonani pano.","Mutha kusankha zomwe mukuzikonda.","Tili pano kukuthandizani nthawi iliyonse.","Valani zomwe zimakupatsani chidaliro.","Khalani omasuka kutifunsa mafunso.","Tili ndi zovala zokongola kwa inu.","Sankhani kalembedwe komwe kakugwirizana nanu.","Titha kukuthandizani kupeza saizi yoyenera.","Lumikizanani nafe pa WhatsApp mosavuta.","Tikuyankhani mwachangu momwe tingathere.","Onani zatsopano zomwe zalowa lero.","Zovala zathu zasankhidwa mosamala.","Mutha kutitumizira uthenga nthawi iliyonse.","Tikukuthokozani chifukwa chotichezera.","Khalani ndi tsiku labwino komanso lokongola.","Tiyeni tikuthandizeni kupeza zomwe mukufuna.","Mtundu uliwonse ukusonyeza umunthu wanu.","Timayamikira kukoma kwanu.","Tikufunirani zabwino pamene mukusankha."];
   try{ const s=await api('/settings'); if(s.hero_phrases){ const custom=String(s.hero_phrases).split(/\r?\n/).map(x=>x.trim()).filter(Boolean); if(custom.length) lines=custom; } }catch{}
   let i=0;
   const set=(n,animate=true)=>{ el.classList.remove('chichewa-in'); if(animate && !reduce){ el.classList.add('chichewa-out'); setTimeout(()=>{ el.textContent=lines[n]; el.classList.remove('chichewa-out'); el.classList.add('chichewa-in'); },220); } else { el.textContent=lines[n]; } };
@@ -192,7 +192,36 @@ const render=()=>{
 render();
 }catch(e){document.getElementById("product-detail").innerHTML=`<p class="muted">Product not found.</p>`}}
 async function enquireProduct(id){let name=prompt("Your name");if(!name)return;let contact=prompt("WhatsApp/phone (optional)")||"";let message=prompt("Your question");if(!message)return;try{await api("/enquiries",{method:"POST",body:JSON.stringify({name,contact,product_id:id,message})});toast("Enquiry sent!")}catch(e){toast(e.message)}}
-function loginSetup(){document.getElementById("login-form").onsubmit=async e=>{e.preventDefault();let d=Object.fromEntries(new FormData(e.target));try{let r=await api("/login",{method:"POST",body:JSON.stringify(d)});token=r.token;localStorage.setItem("tc_token",token);location.href="/admin"}catch(err){document.getElementById("login-error").textContent=err.message}}}
+function loginSetup(){
+  const form=document.getElementById("login-form"); if(!form) return;
+  const saved=JSON.parse(localStorage.getItem("tc_login_remember")||"null");
+  const username=form.elements.username;
+  const password=form.elements.password;
+  const remember=form.elements.remember;
+  if(saved){
+    if(saved.username) username.value=saved.username;
+    if(saved.password) password.value=saved.password;
+    if(remember) remember.checked=true;
+  } else {
+    // first-time prefill for demo
+    if(!username.value) username.value="tahira";
+    if(!password.value) password.value="Tahira@123";
+  }
+  form.onsubmit=async e=>{
+    e.preventDefault();
+    let d=Object.fromEntries(new FormData(form));
+    try{
+      let r=await api("/login",{method:"POST",body:JSON.stringify({username:d.username,password:d.password})});
+      token=r.token; localStorage.setItem("tc_token",token);
+      if(form.elements.remember?.checked){
+        localStorage.setItem("tc_login_remember",JSON.stringify({username:d.username,password:d.password}));
+      } else {
+        localStorage.removeItem("tc_login_remember");
+      }
+      location.href="/admin";
+    }catch(err){document.getElementById("login-error").textContent=err.message}
+  }
+}
 
 /* Admin */
 function showSection(id){document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.nav-link[data-section]').forEach(a=>a.classList.toggle('active',a.dataset.section===id));const titles={dashboard:'Inventory Dashboard',products:'Products',inventory:'Inventory',restock:'Restock Inventory',history:'Stock History',lowstock:'Low Stock',orders:'Order Requests',enquiries:'Customer Enquiries',settings:'Settings'};const h=document.getElementById('admin-title');if(h)h.textContent=titles[id]||'Closset Management';if(window.innerWidth<900)document.getElementById('sidebar')?.classList.remove('show');refreshSection(id)}
