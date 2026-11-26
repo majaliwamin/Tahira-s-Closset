@@ -116,10 +116,13 @@ async function checkout(){
   const total=cart.reduce((s,p)=>s+p.price*p.qty,0);
   const items=cart.map(p=>`- ${p.name} x${p.qty} (${money(p.price*p.qty)})`).join('\n');
   const msg=`Ma order ena nd liti?\n\nName: ${name}\nContact: ${contact}\nOrder:\n${items}\nTotal: ${money(total)}`;
-  try{ await api("/orders",{method:"POST",body:JSON.stringify({customer:name,contact,items:cart,total})}); }catch(e){ console.warn('Order save failed',e); }
-  try{ await navigator.clipboard.writeText(msg); toast("Order message copied. Paste it in WhatsApp."); }
+  const waUrl="https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2";
+  // Open before awaits to avoid popup blocker
+  const opened=window.open(waUrl,"_blank","noopener");
+  try{ await navigator.clipboard.writeText(msg); toast("Order copied. Paste it in WhatsApp."); }
   catch{ prompt("Copy this order message and send it on WhatsApp:", msg); }
-  window.open("https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2","_blank","noopener");
+  try{ await api("/orders",{method:"POST",body:JSON.stringify({customer:name,contact,items:cart,total})}); }catch(e){ console.warn('Order save failed',e); }
+  if(!opened){ window.location.assign(waUrl); }
   cart=[]; saveCart(); closeCart();
 }
 
