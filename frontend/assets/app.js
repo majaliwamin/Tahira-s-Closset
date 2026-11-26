@@ -21,6 +21,8 @@ document.addEventListener("DOMContentLoaded",async()=>{
   document.getElementById("product-form")?.addEventListener("submit",saveProduct);
   document.getElementById("product-images")?.addEventListener("change",previewFiles);
   document.getElementById("settings-form")?.addEventListener("submit",saveSettings);
+  document.getElementById("phrases-form")?.addEventListener("submit",savePhrases);
+  document.getElementById("add-phrase-btn")?.addEventListener("click",()=>{const ta=document.getElementById("hero_phrases_input"); if(!ta) return; ta.value = (ta.value?ta.value.replace(/\s*$/,"\n"):"") + "New market phrase..."; ta.focus(); ta.scrollTop=ta.scrollHeight;});
   document.getElementById("restock-form")?.addEventListener("submit",submitRestock);
   document.getElementById("variant-form")?.addEventListener("submit",saveVariant);
   updateCartCount();
@@ -224,8 +226,8 @@ function loginSetup(){
 }
 
 /* Admin */
-function showSection(id){document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.nav-link[data-section]').forEach(a=>a.classList.toggle('active',a.dataset.section===id));const titles={dashboard:'Inventory Dashboard',products:'Products',inventory:'Inventory',restock:'Restock Inventory',history:'Stock History',lowstock:'Low Stock',orders:'Order Requests',enquiries:'Customer Enquiries',settings:'Settings'};const h=document.getElementById('admin-title');if(h)h.textContent=titles[id]||'Closset Management';if(window.innerWidth<900)document.getElementById('sidebar')?.classList.remove('show');refreshSection(id)}
-async function initAdmin(){if(!token){location.href="/login";return}try{await refreshSection('dashboard');await loadSettingsIntoForm();}catch(e){console.error(e);if(String(e).includes('401')||String(e).includes('sign-in')){localStorage.removeItem("tc_token");token=null;location.href="/login"}}}
+function showSection(id){document.querySelectorAll('.admin-section').forEach(s=>s.classList.remove('active'));document.getElementById(id)?.classList.add('active');document.querySelectorAll('.nav-link[data-section]').forEach(a=>a.classList.toggle('active',a.dataset.section===id));const titles={dashboard:'Inventory Dashboard',products:'Products',inventory:'Inventory',restock:'Restock Inventory',history:'Stock History',lowstock:'Low Stock',orders:'Order Requests',enquiries:'Customer Enquiries',phrases:'Chichewa Market Phrases',settings:'Settings'};const h=document.getElementById('admin-title');if(h)h.textContent=titles[id]||'Closset Management';if(window.innerWidth<900)document.getElementById('sidebar')?.classList.remove('show');refreshSection(id)}
+async function initAdmin(){if(!token){location.href="/login";return}try{await refreshSection('dashboard');await loadSettingsIntoForm();await loadPhrasesIntoForm();}catch(e){console.error(e);if(String(e).includes('401')||String(e).includes('sign-in')){localStorage.removeItem("tc_token");token=null;location.href="/login"}}}
 async function refreshCurrentSection(){const active=document.querySelector('.admin-section.active')?.id||'dashboard';await refreshSection(active);toast('Refreshed')}
 async function refreshSection(id){
   if(id==='dashboard')return loadDashboard();
@@ -236,6 +238,7 @@ async function refreshSection(id){
   if(id==='lowstock')return loadLowStock();
   if(id==='orders')return adminOrders();
   if(id==='enquiries')return adminEnquiries();
+  if(id==='phrases')return loadPhrasesIntoForm();
   if(id==='settings')return loadSettingsIntoForm();
 }
 async function loadDashboard(){const c=await api('/inventory/dashboard');document.getElementById('metrics').innerHTML=[
@@ -297,6 +300,8 @@ async function enquiryStatus(id,s){await api(`/admin/enquiries/${id}?status=${en
 async function deleteEnquiry(id){if(!confirm('Delete enquiry?'))return;await api(`/admin/enquiries/${id}`,{method:'DELETE'});adminEnquiries()}
 async function adminOrders(){let rows=await api('/admin/orders');let statuses=['pending','confirmed','paid','processing','ready for collection','dispatched','delivered','cancelled'];document.getElementById('order-admin').innerHTML=rows.map(r=>`<div class="panel" style="margin-bottom:12px"><strong>Order #${r.id} · ${esc(r.customer)}</strong><p class="muted small">${esc(r.contact||'')} · ${money(r.total)} · ${esc(r.created_at||'')}</p><div class="muted small">${(()=>{try{return JSON.parse(r.items||'[]').map(i=>`${esc(i.name)} × ${i.qty}`).join(', ')}catch{return ''}})()}</div><select onchange="orderStatus(${r.id},this.value)">${statuses.map(s=>`<option ${s===r.status?'selected':''}>${s}</option>`).join('')}</select></div>`).join('')||'<p class="muted">No orders yet</p>'}
 async function orderStatus(id,s){await api(`/admin/orders/${id}?status=${encodeURIComponent(s)}`,{method:'PATCH'});toast('Order status updated')}
-async function loadSettingsIntoForm(){let s=await api('/settings');let f=document.getElementById('settings-form');if(!f)return;Object.keys(s).forEach(k=>{if(f.elements[k])f.elements[k].value=s[k]});window.currency=s.currency||'MK'}
+async function loadSettingsIntoForm(){let s=await api('/settings');let f=document.getElementById('settings-form');if(f){Object.keys(s).forEach(k=>{if(f.elements[k])f.elements[k].value=s[k]});}let pf=document.getElementById('phrases-form');if(pf?.elements.hero_phrases && s.hero_phrases!=null) pf.elements.hero_phrases.value=s.hero_phrases; window.currency=s.currency||'MK'}
+async function loadPhrasesIntoForm(){let s=await api('/settings');let f=document.getElementById('phrases-form');if(f?.elements.hero_phrases && s.hero_phrases!=null) f.elements.hero_phrases.value=s.hero_phrases;}
+async function savePhrases(e){e.preventDefault();let d=Object.fromEntries(new FormData(e.target));try{await api('/admin/settings',{method:'PUT',body:JSON.stringify({hero_phrases:d.hero_phrases||''})});toast('Phrases saved. Refresh storefront to see changes.')}catch(err){toast(err.message)}}
 async function saveSettings(e){e.preventDefault();let d=Object.fromEntries(new FormData(e.target));try{await api('/admin/settings',{method:'PUT',body:JSON.stringify(d)});window.currency=d.currency||window.currency;toast('Settings saved')}catch(e){toast(e.message)}}
 async function logout(){try{await api('/logout',{method:'POST'})}catch{}localStorage.removeItem('tc_token');token=null;location.href='/login'}

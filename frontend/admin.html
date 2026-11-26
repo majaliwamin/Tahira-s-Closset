@@ -8,6 +8,7 @@
 <a href="#lowstock" data-section="lowstock" class="nav-link">Low Stock</a>
 <a href="#orders" data-section="orders" class="nav-link">Orders</a>
 <a href="#enquiries" data-section="enquiries" class="nav-link">Enquiries</a>
+<a href="#phrases" data-section="phrases" class="nav-link">Chichewa Phrases</a>
 <a href="#settings" data-section="settings" class="nav-link">Settings</a>
 <a href="#" onclick="logout();return false;">Sign out</a></aside>
 <main class="admin-main">
@@ -86,8 +87,20 @@
 <section id="enquiries" class="admin-section"><div class="section-heading"><h2>Customer enquiries</h2><div class="header-actions"><button class="btn" onclick="adminEnquiries()">Refresh</button></div></div>
 <div class="panel"><p class="muted" style="margin:0">Track customer questions, reply on WhatsApp, and mark enquiries as read, replied, resolved, or archived.</p></div>
 <div id="enquiry-admin"></div></section>
+<section id="phrases" class="admin-section"><div class="section-heading"><h2>Chichewa Market Phrases</h2></div>
+<div class="panel"><p class="muted" style="margin:0">Update the animated phrases shown on the home page hero (where "Elegance that speaks for you" sits). Add one phrase per line — edit, add, or remove as needed.</p></div>
+<form id="phrases-form" class="form-panel">
+<label class="full">Animated phrases (one per line)
+<textarea name="hero_phrases" id="hero_phrases_input" rows="14" placeholder="Kodi inu zabwino ai?&#10;Takulandirani ku Tahira's Closset."></textarea></label>
+<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:12px">
+<button class="btn primary" type="submit">Save phrases</button>
+<button class="btn" type="button" id="add-phrase-btn">Add new phrase line</button>
+</div>
+<p class="muted small" style="margin-top:10px">Tip: Keep phrases short and welcoming. Saved phrases appear on the storefront after refresh.</p>
+</form></section>
+
 <section id="settings" class="admin-section"><div class="section-heading"><h2>Closset settings</h2></div>
-<div class="panel"><p class="muted" style="margin:0">Manage storefront details and the animated hero advertising phrases shown on the home page.</p></div>
+<div class="panel"><p class="muted" style="margin:0">Manage storefront details. Hero animated phrases are managed in <strong>Chichewa Phrases</strong>.</p></div>
 <form id="settings-form" class="settings-grid form-panel">
 <label>Closset name<input name="closset_name"></label>
 <label>Tagline<input name="tagline"></label>
@@ -95,9 +108,6 @@
 <label>Contact information<input name="contact"></label>
 <label>Currency<input name="currency" value="MK"></label>
 <label class="full">Delivery/collection details<textarea name="delivery" rows="3"></textarea></label>
-<label class="full">Hero animated phrases (one per line). These appear in the animated phrase position on the home page.
-<textarea name="hero_phrases" rows="10" placeholder="Kodi inu muli bwino?
-Takulandirani ku Tahira's Closset."></textarea></label>
 <div class="full"><button class="btn primary">Save settings</button></div>
 </form></section>
 </main>
