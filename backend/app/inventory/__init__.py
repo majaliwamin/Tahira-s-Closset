@@ -1,0 +1,1 @@
+"""Inventory 2.0 module for Tahira's Closset."""

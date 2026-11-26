@@ -1,0 +1,111 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><link rel="stylesheet" href="/assets/style.css"><title>Closset management</title></head><body class="admin-body">
+<aside class="sidebar" id="sidebar"><div class="brand">TAHIRA'S <span>CLOSSET</span></div><p class="eyebrow">MANAGEMENT</p>
+<a href="#dashboard" data-section="dashboard" class="nav-link active">Dashboard</a>
+<a href="#products" data-section="products" class="nav-link">Products</a>
+<a href="#inventory" data-section="inventory" class="nav-link">Inventory</a>
+<a href="#restock" data-section="restock" class="nav-link">Restock</a>
+<a href="#history" data-section="history" class="nav-link">Stock History</a>
+<a href="#lowstock" data-section="lowstock" class="nav-link">Low Stock</a>
+<a href="#orders" data-section="orders" class="nav-link">Orders</a>
+<a href="#enquiries" data-section="enquiries" class="nav-link">Enquiries</a>
+<a href="#settings" data-section="settings" class="nav-link">Settings</a>
+<a href="#" onclick="logout();return false;">Sign out</a></aside>
+<main class="admin-main">
+<header class="admin-header"><button class="hamb" onclick="document.getElementById('sidebar').classList.toggle('show')">☰</button><div><p class="eyebrow">CLOSSET MANAGEMENT</p><h1 id="admin-title">Inventory Dashboard</h1></div><div class="header-actions"><button class="btn" onclick="refreshCurrentSection()">Refresh</button><button class="btn primary" onclick="showProductForm()">＋ Add product</button></div></header>
+
+<section id="dashboard" class="admin-section active">
+  <div class="metrics" id="metrics"></div>
+  <div class="dashboard-grid">
+    <div class="panel"><div class="section-heading"><h2>Low stock alerts</h2><button class="btn" onclick="showSection('lowstock')">View all</button></div><div id="dash-low-stock" class="table-wrap"></div></div>
+    <div class="panel"><div class="section-heading"><h2>Out of stock</h2><button class="btn" onclick="showSection('lowstock')">View all</button></div><div id="dash-out-stock" class="table-wrap"></div></div>
+  </div>
+  <div class="panel"><div class="section-heading"><h2>Recent stock movements</h2><button class="btn" onclick="showSection('history')">History</button></div><div id="dash-movements" class="table-wrap"></div></div>
+  <div class="panel"><div class="section-heading"><h2>Recently restocked</h2></div><div id="dash-restocked" class="table-wrap"></div></div>
+</section>
+
+<section id="products" class="admin-section"><div class="section-heading"><h2>Products</h2><div class="header-actions"><button class="btn" onclick="exportInventoryCSV()">Export CSV</button><button class="btn primary" onclick="showProductForm()">＋ Add product</button></div></div>
+  <div class="filters-row"><input id="product-search" placeholder="Search products, SKU..." oninput="adminProducts()"><select id="product-filter-status" onchange="adminProducts()"><option value="">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option></select></div>
+  <div id="product-admin" class="table-wrap"></div>
+</section>
+
+<section id="inventory" class="admin-section">
+  <div class="section-heading"><h2>Inventory</h2><div class="header-actions"><button class="btn" onclick="document.getElementById('inventory-import-file').click()">Import CSV</button><button class="btn" onclick="exportInventoryCSV()">Export CSV</button></div></div>
+  <input type="file" id="inventory-import-file" accept=".csv,text/csv" style="display:none" onchange="previewInventoryImport(this.files[0])">
+  <div class="filters-row">
+    <input id="inv-q" placeholder="Search name/SKU/barcode" oninput="loadInventory()">
+    <select id="inv-category" onchange="loadInventory()"><option value="">All categories</option></select>
+    <select id="inv-status" onchange="loadInventory()"><option value="">All stock statuses</option><option value="in_stock">In stock</option><option value="low_stock">Low stock</option><option value="out_of_stock">Out of stock</option></select>
+    <select id="inv-active" onchange="loadInventory()"><option value="">Active & inactive</option><option value="true">Active</option><option value="false">Inactive</option></select>
+  </div>
+  <div class="panel subtle"><div class="section-heading"><h3>Bulk operations</h3></div><div class="bulk-row">
+    <label>Threshold <input id="bulk-threshold" type="number" min="0" style="width:90px"></label>
+    <label>Status <select id="bulk-active"><option value="">No change</option><option value="true">Activate</option><option value="false">Deactivate</option></select></label>
+    <label>Stock qty <input id="bulk-stock" type="number" min="0" style="width:90px"></label>
+    <button class="btn" onclick="applyBulkVariants()">Apply to selected variants</button>
+    <span id="bulk-selected" class="muted">0 selected</span>
+  </div></div>
+  <div id="inventory-admin" class="table-wrap"></div>
+  <div id="inventory-import-preview" class="panel" style="display:none"></div>
+</section>
+
+<section id="restock" class="admin-section"><div class="section-heading"><h2>Restock Inventory</h2></div>
+  <div class="panel form-panel">
+    <form id="restock-form" class="form-grid">
+      <label>Product<select name="product_id" id="restock-product" required onchange="loadRestockVariants()"><option value="">Select product</option></select></label>
+      <label>Variant (size/colour)<select name="variant_id" id="restock-variant" required><option value="">Select variant</option></select></label>
+      <label>Quantity received<input name="quantity_received" type="number" min="1" required></label>
+      <label>Supplier<input name="supplier" placeholder="Supplier name"></label>
+      <label>Cost price<input name="cost_price" type="number" min="0" step="0.01" placeholder="Optional"></label>
+      <label>Invoice / reference<input name="reference_number" placeholder="INV-001"></label>
+      <label class="full">Notes<textarea name="notes" rows="3" placeholder="Delivery notes, condition, batch..."></textarea></label>
+      <div class="full"><button class="btn primary" type="submit">Record restock</button></div>
+    </form>
+  </div>
+</section>
+
+<section id="history" class="admin-section"><div class="section-heading"><h2>Stock History</h2><div class="header-actions"><button class="btn" onclick="exportHistoryCSV()">Export CSV</button></div></div>
+  <div class="filters-row">
+    <input id="hist-q" placeholder="Search product/SKU/barcode" oninput="loadHistory()">
+    <select id="hist-type" onchange="loadHistory()"><option value="">All movements</option><option value="opening_stock">Opening stock</option><option value="restocking">Restocking</option><option value="sale">Sale</option><option value="reservation">Reservation</option><option value="reservation_release">Reservation release</option><option value="return">Return</option><option value="damaged_stock">Damaged stock</option><option value="lost_stock">Lost stock</option><option value="manual_correction">Manual correction</option><option value="stock_transfer">Stock transfer</option></select>
+    <input id="hist-from" type="date" onchange="loadHistory()">
+    <input id="hist-to" type="date" onchange="loadHistory()">
+  </div>
+  <div id="history-admin" class="table-wrap"></div>
+</section>
+
+<section id="lowstock" class="admin-section"><div class="section-heading"><h2>Low Stock & Out of Stock</h2></div>
+  <div class="filters-row"><input id="low-q" placeholder="Search..." oninput="loadLowStock()"><select id="low-sort" onchange="loadLowStock()"><option value="urgency">Sort by urgency</option><option value="quantity">Sort by quantity</option><option value="name">Sort by name</option></select></div>
+  <div class="dashboard-grid"><div class="panel"><h3>Out of stock</h3><div id="out-stock-list" class="table-wrap"></div></div><div class="panel"><h3>Low stock</h3><div id="low-stock-list" class="table-wrap"></div></div></div>
+</section>
+
+<section id="orders" class="admin-section"><div class="section-heading"><h2>Order requests</h2></div><div id="order-admin"></div></section>
+<section id="enquiries" class="admin-section"><div class="section-heading"><h2>Customer enquiries</h2></div><div id="enquiry-admin"></div></section>
+<section id="settings" class="admin-section"><div class="section-heading"><h2>Closset settings</h2></div><form id="settings-form" class="settings-grid form-panel"><label>Closset name<input name="closset_name"></label><label>Tagline<input name="tagline"></label><label>WhatsApp number<input name="whatsapp" placeholder="Country code + number"></label><label>Contact information<input name="contact"></label><label>Delivery/collection details<textarea name="delivery"></textarea></label><label>Currency<input name="currency" value="MK"></label><button class="btn primary">Save settings</button></form></section>
+</main>
+
+<div class="modal" id="product-modal"><div class="modal-card form-card"><button class="close" onclick="closeProductForm()">×</button><h2 id="product-form-title">Add product</h2>
+<form id="product-form" class="form-grid"><input type="hidden" name="id">
+<label>Product name<input name="name" required></label><label>Description<textarea name="description"></textarea></label>
+<label>Category<input name="category" required></label><label>Brand<input name="brand" placeholder="Optional"></label>
+<label>SKU<input name="sku"></label><label>Supplier<input name="supplier"></label>
+<label>Price<input name="price" type="number" min="0" step="0.01" required></label><label>Sale price<input name="sale_price" type="number" min="0" step="0.01"></label>
+<label>Cost price (private)<input name="cost_price" type="number" min="0" step="0.01"></label><label>Low stock threshold<input name="low_stock_threshold" type="number" min="0" value="3"></label>
+<label>Stock (opening/default variant)<input name="stock" type="number" min="0" value="0"></label><label>Date added<input name="date_added" type="date"></label>
+<label>Sizes (comma-separated)<input name="sizes" placeholder="S, M, L, XL"></label><label>Colours (comma-separated)<input name="colors" placeholder="Black, Red"></label>
+<label><input name="featured" type="checkbox"> Featured</label><label><input name="active" type="checkbox" checked> Active/Published</label>
+<label class="full">Product photos<input type="file" id="product-images" accept="image/*" multiple></label>
+<div id="image-preview" class="image-preview full"></div>
+<div class="full"><button class="btn primary wide">Save product</button></div></form></div></div>
+
+<div class="modal" id="variant-modal"><div class="modal-card form-card"><button class="close" onclick="closeVariantModal()">×</button><h2>Adjust variant</h2>
+<form id="variant-form" class="form-grid"><input type="hidden" name="variant_id"><input type="hidden" name="product_id">
+<label>Product<input name="product_name" disabled></label><label>Variant SKU<input name="variant_sku"></label>
+<label>Size<input name="size"></label><label>Colour<input name="color"></label>
+<label>Stock quantity<input name="stock_quantity" type="number" min="0" required></label><label>Low stock threshold<input name="low_stock_threshold" type="number" min="0" required></label>
+<label>Cost price<input name="cost_price" type="number" min="0" step="0.01"></label><label>Selling price<input name="selling_price" type="number" min="0" step="0.01"></label>
+<label>Barcode<input name="barcode"></label><label><input name="is_active" type="checkbox"> Active</label>
+<label class="full">Reason for stock change<input name="reason" placeholder="Required when changing stock"></label>
+<label class="full">Reference<input name="reference_number" placeholder="Optional reference"></label>
+<div class="full"><button class="btn primary wide">Save variant</button></div></form></div></div>
+
+<script src="/assets/app.js"></script></body></html>
