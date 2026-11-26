@@ -149,7 +149,7 @@ function closeCart(){document.getElementById("cart-modal")?.classList.remove("op
 function cartQty(key,d){key=String(key);let p=cart.find(x=>String(x.key||x.id)===key);if(p){p.qty=Math.max(1,Math.min(p.stock||99,p.qty+d));saveCart();openCart()}}
 function removeCart(key){key=String(key);cart=cart.filter(p=>String(p.key||p.id)!==key);saveCart();openCart()}
 
-function checkout(){
+async function checkout(){
   if(!cart.length){toast("Your bag is empty");return}
   const name=prompt("Your name:"); if(!name) return;
   const contact=prompt("WhatsApp or phone number:"); if(!contact) return;
@@ -157,7 +157,6 @@ function checkout(){
   const items=cart.map(p=>`- ${p.name} x${p.qty} (${money(p.price*p.qty)})`).join('\n');
   const msg=`Ma order ena nd liti?\n\nName: ${name}\nContact: ${contact}\nOrder:\n${items}\nTotal: ${money(total)}`;
   const waUrl="https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2";
-  // Open before awaits to avoid popup blocker
   const opened=window.open(waUrl,"_blank","noopener");
   try{ await navigator.clipboard.writeText(msg); toast("Order copied. Paste it in WhatsApp."); }
   catch{ prompt("Copy this order message and send it on WhatsApp:", msg); }
