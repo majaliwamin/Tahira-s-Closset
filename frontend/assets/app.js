@@ -102,14 +102,34 @@ async function loadShop(){try{currentProducts=await api("/products");let cats=aw
 function renderShop(){let q=(document.getElementById("search")?.value||"").toLowerCase(),cat=document.getElementById("category")?.value||"",sort=document.getElementById("sort")?.value||"recent";let ps=currentProducts.filter(p=>{let hay=(p.name+" "+p.description+" "+p.category+" "+(p.sku||"")+" "+(p.variants||[]).map(v=>v.variant_sku+" "+v.size+" "+v.color).join(" ")).toLowerCase();return hay.includes(q)&&(!cat||p.category===cat)});if(sort==="price-low")ps.sort((a,b)=>(a.sale_price??a.price)-(b.sale_price??b.price));if(sort==="price-high")ps.sort((a,b)=>(b.sale_price??b.price)-(a.sale_price??a.price));document.getElementById("shop-grid").innerHTML=ps.map(card).join("")||emptyProducts()}
 function emptyProducts(){return '<div class="muted">New pieces are on the way. Please check back soon.</div>'}
 function addCart(id){let p=currentProducts.find(x=>x.id===id);if(!p){fetch(API+"/products").then(r=>r.json()).then(ps=>{currentProducts=ps;let found=ps.find(x=>x.id===id);if(found)cartAdd(found)});return}cartAdd(p)}
-function cartAdd(p){let row=cart.find(x=>x.id===p.id);if(row)row.qty=Math.min(row.qty+1,Math.max(1,p.stock));else cart.push({id:p.id,name:p.name,price:p.sale_price??p.price,qty:1,stock:Math.max(1,p.stock)});saveCart();toast("Added to your bag")}
+function addCartVariant(p,v){
+  if(!p) return;
+  const hasVariant=!!v;
+  const stock=Number(hasVariant?v.stock_quantity:p.stock||0);
+  if(stock<=0){toast('This option is out of stock');return}
+  const key=hasVariant?`${p.id}:${v.id}`:`${p.id}`;
+  const name=hasVariant?`${p.name} (${v.size}/${v.color})`:p.name;
+  const price=Number(hasVariant?(v.selling_price??p.sale_price??p.price):(p.sale_price??p.price));
+  let row=cart.find(x=>x.key===key);
+  if(row) row.qty=Math.min(row.qty+1,stock);
+  else cart.push({key,id:p.id,variant_id:v?.id||null,name,price,qty:1,stock});
+  saveCart(); toast("Added to your bag");
+}
+function cartAdd(p){
+  const variants=(p.variants||[]).filter(v=>Number(v.stock_quantity)>0 && v.is_active!==false);
+  if(variants.length===1) return addCartVariant(p,variants[0]);
+  if(variants.length>1){ location.href=`/product?id=${p.id}`; return; }
+  if(Number(p.stock||0)<=0){toast('Out of stock'); return;}
+  addCartVariant(p,null);
+}
 function saveCart(){localStorage.setItem("tc_cart",JSON.stringify(cart));updateCartCount()}
 function updateCartCount(){document.querySelectorAll("#cart-count").forEach(x=>x.textContent=cart.reduce((s,p)=>s+p.qty,0))}
-function openCart(){let modal=document.getElementById("cart-modal");if(!modal)return;modal.classList.add("open");let el=document.getElementById("cart-items");el.innerHTML=cart.map(p=>`<div class="cart-line"><div><strong>${esc(p.name)}</strong><br><span class="muted">${money(p.price)} · qty ${p.qty}</span></div><div><button onclick="cartQty(${p.id},-1)">−</button> <button onclick="cartQty(${p.id},1)">+</button> <button onclick="removeCart(${p.id})">×</button></div></div>`).join("")||"Your bag is empty";document.getElementById("cart-total").innerHTML=`<p><strong>Total: ${money(cart.reduce((s,p)=>s+p.price*p.qty,0))}</strong></p>`}
+function openCart(){let modal=document.getElementById("cart-modal");if(!modal)return;modal.classList.add("open");let el=document.getElementById("cart-items");el.innerHTML=cart.map(p=>`<div class="cart-line"><div><strong>${esc(p.name)}</strong><br><span class="muted">${money(p.price)} · qty ${p.qty}</span></div><div><button onclick="cartQty('${esc(p.key||p.id)}',-1)">−</button> <button onclick="cartQty('${esc(p.key||p.id)}',1)">+</button> <button onclick="removeCart('${esc(p.key||p.id)}')">×</button></div></div>`).join("")||"Your bag is empty";document.getElementById("cart-total").innerHTML=`<p><strong>Total: ${money(cart.reduce((s,p)=>s+p.price*p.qty,0))}</strong></p>`}
 function closeCart(){document.getElementById("cart-modal")?.classList.remove("open")}
-function cartQty(id,d){let p=cart.find(x=>x.id===id);if(p){p.qty=Math.max(1,Math.min(p.stock||99,p.qty+d));saveCart();openCart()}}
-function removeCart(id){cart=cart.filter(p=>p.id!==id);saveCart();openCart()}
-async function checkout(){
+function cartQty(key,d){key=String(key);let p=cart.find(x=>String(x.key||x.id)===key);if(p){p.qty=Math.max(1,Math.min(p.stock||99,p.qty+d));saveCart();openCart()}}
+function removeCart(key){key=String(key);cart=cart.filter(p=>String(p.key||p.id)!==key);saveCart();openCart()}
+
+function checkout(){
   if(!cart.length){toast("Your bag is empty");return}
   const name=prompt("Your name:"); if(!name) return;
   const contact=prompt("WhatsApp or phone number:"); if(!contact) return;
@@ -126,8 +146,32 @@ async function checkout(){
   cart=[]; saveCart(); closeCart();
 }
 
-async function loadDetail(){let id=new URLSearchParams(location.search).get("id");try{let p=await api(`/products/${id}`);currentProducts=[p];let el=document.getElementById("product-detail");let variants=p.variants||[];let sizes=[...new Set(variants.map(v=>v.size).filter(Boolean))];let colors=[...new Set(variants.map(v=>v.color).filter(Boolean))];let vrows=variants.map(v=>`<tr><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td>${v.stock_quantity}</td><td>${statusBadge(stockStatus(v))}</td></tr>`).join('');
-el.innerHTML=`<div class="product-detail"><div class="photos">${(p.images||[]).map(i=>`<img src="${i.path}" alt="${esc(p.name)}">`).join("")||img(p)}</div><div><p class="eyebrow">${esc(p.category||'')}</p><h1 style="font-family:'Playfair Display';font-size:38px">${esc(p.name)}</h1><p class="price">${money(p.sale_price??p.price)}</p><p>${esc(p.description||'')}</p><p><strong>Sizes:</strong> ${esc(sizes.join(', ')||p.sizes||'Ask us')}</p><p><strong>Colours:</strong> ${esc(colors.join(', ')||p.colors||'Ask us')}</p><p>${p.stock>0?`${p.stock} available`:"Currently unavailable"}</p>${variants.length?`<div class="table-wrap"><table class="admin-table compact"><thead><tr><th>Size</th><th>Colour</th><th>Stock</th><th>Status</th></tr></thead><tbody>${vrows}</tbody></table></div>`:''}<div class="product-actions" style="margin-top:14px"><button class="btn primary" ${p.stock<=0?"disabled":""} onclick="addCart(${p.id})">Add to bag</button><button class="btn" onclick="enquireProduct(${p.id})">Ask about this item</button></div></div></div>`}catch(e){document.getElementById("product-detail").innerHTML=`<p class="muted">Product not found.</p>`}}
+async function loadDetail(){let id=new URLSearchParams(location.search).get("id");try{let p=await api(`/products/${id}`);currentProducts=[p];let el=document.getElementById("product-detail");let variants=p.variants||[];let available=variants.filter(v=>Number(v.stock_quantity)>0 && v.is_active!==false);
+const sizeOrder=["XXS","XS","S","M","L","XL","XXL","2XL","3XL"];
+const sizeSort=(a,b)=>{const ia=sizeOrder.indexOf(String(a).toUpperCase());const ib=sizeOrder.indexOf(String(b).toUpperCase());return (ia===-1?999:ia)-(ib===-1?999:ib)||String(a).localeCompare(String(b));};
+let sizes=[...new Set(available.map(v=>v.size).filter(Boolean))].sort(sizeSort);
+let colors=[...new Set(available.map(v=>v.color).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b)));
+const fallbackImgs=["https://images.unsplash.com/photo-1515886657613-9f3515b0c78f?auto=format&fit=crop&w=900&q=80","https://images.unsplash.com/photo-1483985988355-763728e1935b?auto=format&fit=crop&w=900&q=80","https://images.unsplash.com/photo-1529139574466-a303027c1d8b?auto=format&fit=crop&w=900&q=80","https://images.unsplash.com/photo-1496747611176-843222e1e57c?auto=format&fit=crop&w=900&q=80"];
+const imgs=(p.images&&p.images.length)?p.images.map(i=>i.path):fallbackImgs;
+let selSize=sizes[0]||''; let selColor=colors[0]||'';
+const findV=()=>available.find(v=>(!selSize||v.size===selSize)&&(!selColor||v.color===selColor))||available[0]||null;
+const render=()=>{
+  const sel=findV();
+  const max=sel?Number(sel.stock_quantity||0):Number(p.stock||0);
+  el.innerHTML=`<div class="product-detail"><div class="photos detail-gallery">${imgs.map((src,i)=>`<img src="${src}" alt="${esc(p.name)} sample ${i+1}" loading="${i?'lazy':'eager'}">`).join("")}</div><div><p class="eyebrow">${esc(p.category||'')}</p><h1 style="font-family:'Playfair Display';font-size:38px">${esc(p.name)}</h1><p class="price">${money((sel?.selling_price??p.sale_price??p.price)||0)}</p><p>${esc(p.description||'')}</p>
+  <div class="variant-picker"><div><strong>Available sizes</strong><div class="pick-row">${sizes.map(s=>`<button class="pick ${s===selSize?'active':''}" data-size="${esc(s)}">${esc(s)}</button>`).join('')||'<span class="muted">Ask us</span>'}</div></div>
+  <div style="margin-top:10px"><strong>Available colours</strong><div class="pick-row">${colors.map(c=>`<button class="pick ${c===selColor?'active':''}" data-color="${esc(c)}">${esc(c)}</button>`).join('')||'<span class="muted">Ask us</span>'}</div></div></div>
+  <p id="variant-stock" class="muted">${sel?`${sel.stock_quantity} available for ${esc(sel.size)} / ${esc(sel.color)}`:(p.stock>0?`${p.stock} available`:'Currently unavailable')}</p>
+  <div class="product-actions" style="margin-top:14px"><button class="btn primary" id="detail-add" ${(sel?sel.stock_quantity<=0:p.stock<=0)?"disabled":""}>Add to bag</button><button class="btn" id="detail-enquire">Ask about this item</button></div>
+  ${available.length?`<div class="table-wrap" style="margin-top:16px"><table class="admin-table compact"><thead><tr><th>Size</th><th>Colour</th><th>Stock</th><th>Status</th></tr></thead><tbody>${available.map(v=>`<tr><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td>${v.stock_quantity}</td><td>${statusBadge(stockStatus(v))}</td></tr>`).join('')}</tbody></table></div>`:''}
+  </div></div>`;
+  el.querySelectorAll('[data-size]').forEach(b=>b.onclick=()=>{selSize=b.dataset.size; render();});
+  el.querySelectorAll('[data-color]').forEach(b=>b.onclick=()=>{selColor=b.dataset.color; render();});
+  el.querySelector('#detail-add').onclick=()=>{const v=findV(); addCartVariant(p,v);};
+  el.querySelector('#detail-enquire').onclick=()=>enquireProduct(p.id);
+};
+render();
+}catch(e){document.getElementById("product-detail").innerHTML=`<p class="muted">Product not found.</p>`}}
 async function enquireProduct(id){let name=prompt("Your name");if(!name)return;let contact=prompt("WhatsApp/phone (optional)")||"";let message=prompt("Your question");if(!message)return;try{await api("/enquiries",{method:"POST",body:JSON.stringify({name,contact,product_id:id,message})});toast("Enquiry sent!")}catch(e){toast(e.message)}}
 function loginSetup(){document.getElementById("login-form").onsubmit=async e=>{e.preventDefault();let d=Object.fromEntries(new FormData(e.target));try{let r=await api("/login",{method:"POST",body:JSON.stringify(d)});token=r.token;localStorage.setItem("tc_token",token);location.href="/admin"}catch(err){document.getElementById("login-error").textContent=err.message}}}
 
