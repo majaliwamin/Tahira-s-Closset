@@ -109,7 +109,19 @@ function openCart(){let modal=document.getElementById("cart-modal");if(!modal)re
 function closeCart(){document.getElementById("cart-modal")?.classList.remove("open")}
 function cartQty(id,d){let p=cart.find(x=>x.id===id);if(p){p.qty=Math.max(1,Math.min(p.stock||99,p.qty+d));saveCart();openCart()}}
 function removeCart(id){cart=cart.filter(p=>p.id!==id);saveCart();openCart()}
-async function checkout(){if(!cart.length){toast("Your bag is empty");return}let name=prompt("Your name:");if(!name)return;let contact=prompt("WhatsApp or phone number:");if(!contact)return;try{let total=cart.reduce((s,p)=>s+p.price*p.qty,0);let result=await api("/orders",{method:"POST",body:JSON.stringify({customer:name,contact,items:cart,total})});toast("Order request sent. Reference #"+result.id);cart=[];saveCart();closeCart()}catch(e){toast(e.message)}}
+async function checkout(){
+  if(!cart.length){toast("Your bag is empty");return}
+  const name=prompt("Your name:"); if(!name) return;
+  const contact=prompt("WhatsApp or phone number:"); if(!contact) return;
+  const total=cart.reduce((s,p)=>s+p.price*p.qty,0);
+  const items=cart.map(p=>`- ${p.name} x${p.qty} (${money(p.price*p.qty)})`).join('\n');
+  const msg=`Ma order ena nd liti?\n\nName: ${name}\nContact: ${contact}\nOrder:\n${items}\nTotal: ${money(total)}`;
+  try{ await api("/orders",{method:"POST",body:JSON.stringify({customer:name,contact,items:cart,total})}); }catch(e){ console.warn('Order save failed',e); }
+  try{ await navigator.clipboard.writeText(msg); toast("Order message copied. Paste it in WhatsApp."); }
+  catch{ prompt("Copy this order message and send it on WhatsApp:", msg); }
+  window.open("https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2","_blank","noopener");
+  cart=[]; saveCart(); closeCart();
+}
 
 async function loadDetail(){let id=new URLSearchParams(location.search).get("id");try{let p=await api(`/products/${id}`);currentProducts=[p];let el=document.getElementById("product-detail");let variants=p.variants||[];let sizes=[...new Set(variants.map(v=>v.size).filter(Boolean))];let colors=[...new Set(variants.map(v=>v.color).filter(Boolean))];let vrows=variants.map(v=>`<tr><td>${esc(v.size)}</td><td>${esc(v.color)}</td><td>${v.stock_quantity}</td><td>${statusBadge(stockStatus(v))}</td></tr>`).join('');
 el.innerHTML=`<div class="product-detail"><div class="photos">${(p.images||[]).map(i=>`<img src="${i.path}" alt="${esc(p.name)}">`).join("")||img(p)}</div><div><p class="eyebrow">${esc(p.category||'')}</p><h1 style="font-family:'Playfair Display';font-size:38px">${esc(p.name)}</h1><p class="price">${money(p.sale_price??p.price)}</p><p>${esc(p.description||'')}</p><p><strong>Sizes:</strong> ${esc(sizes.join(', ')||p.sizes||'Ask us')}</p><p><strong>Colours:</strong> ${esc(colors.join(', ')||p.colors||'Ask us')}</p><p>${p.stock>0?`${p.stock} available`:"Currently unavailable"}</p>${variants.length?`<div class="table-wrap"><table class="admin-table compact"><thead><tr><th>Size</th><th>Colour</th><th>Stock</th><th>Status</th></tr></thead><tbody>${vrows}</tbody></table></div>`:''}<div class="product-actions" style="margin-top:14px"><button class="btn primary" ${p.stock<=0?"disabled":""} onclick="addCart(${p.id})">Add to bag</button><button class="btn" onclick="enquireProduct(${p.id})">Ask about this item</button></div></div></div>`}catch(e){document.getElementById("product-detail").innerHTML=`<p class="muted">Product not found.</p>`}}
