@@ -49,6 +49,7 @@
 </section>
 
 <section id="restock" class="admin-section"><div class="section-heading"><h2>Restock Inventory</h2></div>
+<div class="panel"><p class="muted" style="margin:0">Record received stock by product variant. Every restock creates an auditable ledger entry with supplier, cost, reference, and notes.</p></div>
   <div class="panel form-panel">
     <form id="restock-form" class="form-grid">
       <label>Product<select name="product_id" id="restock-product" required onchange="loadRestockVariants()"><option value="">Select product</option></select></label>
@@ -74,13 +75,31 @@
 </section>
 
 <section id="lowstock" class="admin-section"><div class="section-heading"><h2>Low Stock & Out of Stock</h2></div>
+<div class="panel"><p class="muted" style="margin:0">Monitor items that need attention. Restock low and out-of-stock variants before customers are disappointed.</p></div>
   <div class="filters-row"><input id="low-q" placeholder="Search..." oninput="loadLowStock()"><select id="low-sort" onchange="loadLowStock()"><option value="urgency">Sort by urgency</option><option value="quantity">Sort by quantity</option><option value="name">Sort by name</option></select></div>
   <div class="dashboard-grid"><div class="panel"><h3>Out of stock</h3><div id="out-stock-list" class="table-wrap"></div></div><div class="panel"><h3>Low stock</h3><div id="low-stock-list" class="table-wrap"></div></div></div>
 </section>
 
-<section id="orders" class="admin-section"><div class="section-heading"><h2>Order requests</h2></div><div id="order-admin"></div></section>
-<section id="enquiries" class="admin-section"><div class="section-heading"><h2>Customer enquiries</h2></div><div id="enquiry-admin"></div></section>
-<section id="settings" class="admin-section"><div class="section-heading"><h2>Closset settings</h2></div><form id="settings-form" class="settings-grid form-panel"><label>Closset name<input name="closset_name"></label><label>Tagline<input name="tagline"></label><label>WhatsApp number<input name="whatsapp" placeholder="Country code + number"></label><label>Contact information<input name="contact"></label><label>Delivery/collection details<textarea name="delivery"></textarea></label><label>Currency<input name="currency" value="MK"></label><button class="btn primary">Save settings</button></form></section>
+<section id="orders" class="admin-section"><div class="section-heading"><h2>Order requests</h2><div class="header-actions"><button class="btn" onclick="adminOrders()">Refresh</button></div></div>
+<div class="panel"><p class="muted" style="margin:0">Review customer order requests, confirm availability, and update order status. Use WhatsApp/contact details to follow up quickly.</p></div>
+<div id="order-admin"></div></section>
+<section id="enquiries" class="admin-section"><div class="section-heading"><h2>Customer enquiries</h2><div class="header-actions"><button class="btn" onclick="adminEnquiries()">Refresh</button></div></div>
+<div class="panel"><p class="muted" style="margin:0">Track customer questions, reply on WhatsApp, and mark enquiries as read, replied, resolved, or archived.</p></div>
+<div id="enquiry-admin"></div></section>
+<section id="settings" class="admin-section"><div class="section-heading"><h2>Closset settings</h2></div>
+<div class="panel"><p class="muted" style="margin:0">Manage storefront details and the animated hero advertising phrases shown on the home page.</p></div>
+<form id="settings-form" class="settings-grid form-panel">
+<label>Closset name<input name="closset_name"></label>
+<label>Tagline<input name="tagline"></label>
+<label>WhatsApp link or number<input name="whatsapp" placeholder="WhatsApp link or number"></label>
+<label>Contact information<input name="contact"></label>
+<label>Currency<input name="currency" value="MK"></label>
+<label class="full">Delivery/collection details<textarea name="delivery" rows="3"></textarea></label>
+<label class="full">Hero animated phrases (one per line). These appear in the animated phrase position on the home page.
+<textarea name="hero_phrases" rows="10" placeholder="Kodi inu muli bwino?
+Takulandirani ku Tahira's Closset."></textarea></label>
+<div class="full"><button class="btn primary">Save settings</button></div>
+</form></section>
 </main>
 
 <div class="modal" id="product-modal"><div class="modal-card form-card"><button class="close" onclick="closeProductForm()">×</button><h2 id="product-form-title">Add product</h2>
