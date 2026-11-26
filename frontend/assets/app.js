@@ -26,12 +26,17 @@ document.addEventListener("DOMContentLoaded",async()=>{
   updateCartCount();
 });
 
+let _heroTimer=null;
 function initHeroSlider(){
   const slides=[...document.querySelectorAll('.hero-slide')];
   const reduce=window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   if(slides.length>1 && !reduce){
-    let i=0;
-    setInterval(()=>{
+    if(_heroTimer) clearInterval(_heroTimer);
+    let i=slides.findIndex(s=>s.classList.contains('active'));
+    if(i<0) i=0;
+    slides.forEach((s,idx)=>s.classList.toggle('active', idx===i));
+    _heroTimer=setInterval(()=>{
+      if(!slides[i]) i=0;
       slides[i].classList.remove('active');
       i=(i+1)%slides.length;
       slides[i].classList.add('active');
@@ -43,9 +48,7 @@ function initHeroSlider(){
 function initChichewaRotator(reduce){
   const el=document.getElementById('chichewa-text');
   if(!el) return;
-  const lines=[
-    "Kodi muli bwino?","Kodi mungakonde kuyesa chiyani lero?","Kodi mukufuna kukongola kotani?","Kodi mukufunanso kukula kwanji?","Kodi mukufuna mtundu uti?","Kodi tingakuthandizeni kusankha?","Kodi mwakonzeka kuvala mokongola?","Kodi mukufuna zovala za tsiku liti?","Kodi mukufuna kuoneka mwachidaliro?","Kodi tikutumizireni zomwe mwakonda?","Muli bwanji lero?","Takulandirani ku Tahira's Closset.","Mwakulandiridwa ndi manja awiri.","Zikomo kwambiri chifukwa chobwera.","Ndife okondwa kukuthandizani.","Mutha kutifunsa chilichonse.","Tili pano kukuthandizani.","Sankhani zomwe mukuzikonda.","Valani zomwe zimakupatsani chidaliro.","Khalani omasuka kufunsa.","Timakonda kukuthandizani.","Lumikizanani nafe pa WhatsApp.","Tiyankhula nanu posachedwa.","Zovala zabwino zimapezeka apa.","Mutha kuwona zatsopano lero.","Tengani nthawi yanu kusankha.","Muli ndi kukoma kwabwino.","Tikuyembekezera uthenga wanu.","Tithandizeni kudziwa zomwe mukufuna.","Zikomo chifukwa chotisankha ife."
-  ];
+  const lines=["Kodi inu muli bwino?", "Kodi mungakonde kuyesa chovala chanji lero?", "Kodi mukufuna saizi yanji?", "Kodi mukukonda mtundu wanji?", "Kodi mukufuna zovala za mwambo uti?", "Kodi tingakuthandizeni kusankha zovala?", "Kodi mukufuna kuoneka motani lero?", "Kodi mwayesa kale kalembedwe kameneka?", "Kodi mukufuna kuti tikutumizireni zithunzi zina?", "Kodi mukufuna kugula tsopano kapena mufunsa kaye?", "Kodi mukufuna zovala za tsiku lapadera?", "Takulandirani ku Tahira's Closset.", "Ndife okondwa kukuonani pano.", "Mutha kusankha zomwe mukuzikonda.", "Tili pano kukuthandizani nthawi iliyonse.", "Valani zomwe zimakupatsani chidaliro.", "Khalani omasuka kutifunsa mafunso.", "Tili ndi zovala zokongola kwa inu.", "Sankhani kalembedwe komwe kakugwirizana nanu.", "Titha kukuthandizani kupeza saizi yoyenera.", "Lumikizanani nafe pa WhatsApp mosavuta.", "Tikuyankhani mwachangu momwe tingathere.", "Onani zatsopano zomwe zalowa lero.", "Zovala zathu zasankhidwa mosamala.", "Mutha kutitumizira uthenga nthawi iliyonse.", "Tikukuthokozani chifukwa chotichezera.", "Khalani ndi tsiku labwino komanso lokongola.", "Tiyeni tikuthandizeni kupeza zomwe mukufuna.", "Mtundu uliwonse ukusonyeza umunthu wanu.", "Timayamikira kukoma kwanu.", "Tikufunirani zabwino pamene mukusankha."];
   let i=0;
   const set=(n,animate=true)=>{
     el.classList.remove('chichewa-in');
@@ -71,6 +74,7 @@ function initHomeTabs(){
     tabs.forEach(a=>a.classList.toggle('active', a.dataset.homeTab===name));
     document.getElementById('nav')?.classList.remove('show');
     if(name==='shop' || name==='new') ensureHomeProducts(name);
+    if(name==='home') initHeroSlider();
     if(push){ const hash=name==='home'?'#home':`#${name}`; history.replaceState(null,'',hash); }
     window.scrollTo({top:0,behavior:'smooth'});
   };
