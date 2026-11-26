@@ -68,3 +68,5 @@ footer .wa-link .wa-icon{color:#25D366}
 #chichewa-text.chichewa-out{opacity:0;transform:translateY(8px)}
 #chichewa-text.chichewa-in{opacity:1;transform:translateY(0)}
 @media (prefers-reduced-motion:reduce){#chichewa-text{transition:none;transform:none}}
+
+.loc-pin{width:18px;height:18px;display:inline-block;vertical-align:middle;color:currentColor;flex:0 0 auto}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
