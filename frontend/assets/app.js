@@ -1,6 +1,6 @@
 const API="/api";let cart=JSON.parse(localStorage.getItem("tc_cart")||"[]");let token=localStorage.getItem("tc_token");let currentProducts=[];let uploadFiles=[];let adminInventory=[];let selectedVariants=new Set();let importPreviewRows=[];
 function money(v){let s=Number(v||0).toLocaleString();return `${(window.currency||"MK")} ${s}`}
-function toast(msg){let t=document.createElement("div");t.className="toast";t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),2600)}
+function toast(msg){let t=document.createElement("div");t.className="toast";t.setAttribute("role","status");t.setAttribute("aria-live","polite");t.textContent=msg;document.body.append(t);setTimeout(()=>t.remove(),3200)}
 function esc(s){return String(s??"").replace(/[&<>"']/g,m=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]))}
 async function api(path,opts={}){let h=opts.headers||{};if(token)h["Authorization"]="Bearer "+token;if(opts.body&&!(opts.body instanceof FormData))h["Content-Type"]="application/json";let r=await fetch(API+path,{...opts,headers:h});if(!r.ok){let m="Request failed";try{let j=await r.json();m=j.detail||j.message||JSON.stringify(j)}catch{try{m=await r.text()}catch{}}throw Error(m||"Request failed")}if(r.status===204)return null;const ct=r.headers.get('content-type')||'';if(ct.includes('application/json'))return r.json();return r.text()}
 function img(p){let i=p.images?.[0]?.path;return i?`<img loading="lazy" src="${i}" alt="${esc(p.name)}">`:`<div class="placeholder">${esc((p.name||'H').slice(0,1))}</div>`}
@@ -155,18 +155,39 @@ function closeCart(){document.getElementById("cart-modal")?.classList.remove("op
 function cartQty(key,d){key=String(key);let p=cart.find(x=>String(x.key||x.id)===key);if(p){p.qty=Math.max(1,Math.min(p.stock||99,p.qty+d));saveCart();openCart()}}
 function removeCart(key){key=String(key);cart=cart.filter(p=>String(p.key||p.id)!==key);saveCart();openCart()}
 
-async function checkout(){
+function checkout(){
   if(!cart.length){toast("Your bag is empty");return}
-  const name=prompt("Your name:"); if(!name) return;
-  const contact=prompt("WhatsApp or phone number:"); if(!contact) return;
+  const total=cart.reduce((s,p)=>s+p.price*p.qty,0);
+  const summary=cart.map(p=>`<div>${esc(p.name)} × ${p.qty} — <strong>${money(p.price*p.qty)}</strong></div>`).join('');
+  const modal=document.getElementById('cart-modal');
+  const box=modal?.querySelector('.modal-card');
+  if(!box){toast('Checkout unavailable');return}
+  box.innerHTML=`<button class="close" onclick="openCart()" aria-label="Back to bag">×</button><h2>Checkout</h2>
+  <div class="order-summary">${summary}<hr style="border:none;border-top:1px solid var(--line);margin:10px 0"><strong>Total: ${money(total)}</strong></div>
+  <form id="checkout-form" class="checkout-form">
+    <label>Full name<input name="name" required autocomplete="name"></label>
+    <label>WhatsApp / phone<input name="contact" required autocomplete="tel" placeholder="+265..."></label>
+    <label>Delivery or pickup location<input name="location" required placeholder="Nkhotakota Boma District / area"></label>
+    <label>Note (optional)<textarea name="note" rows="2" placeholder="Size, color, delivery time"></textarea></label>
+    <label><input type="checkbox" name="confirm" required> I confirm my order details are correct.</label>
+    <button class="btn primary wide" type="submit">Send order request on WhatsApp</button>
+    <button class="btn wide" type="button" onclick="openCart()">Back to bag</button>
+  </form>`;
+  document.getElementById('checkout-form').onsubmit=submitCheckout;
+}
+async function submitCheckout(e){
+  e.preventDefault();
+  const f=e.target; const d=Object.fromEntries(new FormData(f));
   const total=cart.reduce((s,p)=>s+p.price*p.qty,0);
   const items=cart.map(p=>`- ${p.name} x${p.qty} (${money(p.price*p.qty)})`).join('\n');
-  const msg=`Ma order ena nd liti?\n\nName: ${name}\nContact: ${contact}\nOrder:\n${items}\nTotal: ${money(total)}`;
+  const msg=`Ma order ena nd liti?\n\nName: ${d.name}\nContact: ${d.contact}\nLocation: ${d.location}\nNote: ${d.note||'-'}\nOrder:\n${items}\nTotal: ${money(total)}`;
   const waUrl="https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2";
   const opened=window.open(waUrl,"_blank","noopener");
   try{ await navigator.clipboard.writeText(msg); toast("Order copied. Paste it in WhatsApp."); }
   catch{ prompt("Copy this order message and send it on WhatsApp:", msg); }
-  try{ await api("/orders",{method:"POST",body:JSON.stringify({customer:name,contact,items:cart,total})}); }catch(e){ console.warn('Order save failed',e); }
+  try{
+    await api("/orders",{method:"POST",body:JSON.stringify({customer:d.name,contact:d.contact,location:d.location,note:d.note||'',items:cart,total,source:'web'})});
+  }catch(err){ console.warn('Order save failed',err); toast('Order message ready, but saving to system failed.'); }
   if(!opened){ window.location.assign(waUrl); }
   cart=[]; saveCart(); closeCart();
 }
@@ -206,12 +227,12 @@ function loginSetup(){
   const remember=form.elements.remember;
   if(saved){
     if(saved.username) username.value=saved.username;
-    if(saved.password) password.value=saved.password;
+    /* password not remembered for security */
     if(remember) remember.checked=true;
   } else {
     // first-time prefill for demo
     if(!username.value) username.value="tahira";
-    if(!password.value) password.value="Tahira@123";
+    if(!password.value) password.value="Tahira@123"; // demo only; not stored
   }
   form.onsubmit=async e=>{
     e.preventDefault();
@@ -220,7 +241,7 @@ function loginSetup(){
       let r=await api("/login",{method:"POST",body:JSON.stringify({username:d.username,password:d.password})});
       token=r.token; localStorage.setItem("tc_token",token);
       if(form.elements.remember?.checked){
-        localStorage.setItem("tc_login_remember",JSON.stringify({username:d.username,password:d.password}));
+        localStorage.setItem("tc_login_remember",JSON.stringify({username:d.username}));
       } else {
         localStorage.removeItem("tc_login_remember");
       }

@@ -1,6 +1,7 @@
 from fastapi import FastAPI, HTTPException, UploadFile, File, Form, Depends, Request
 from fastapi.responses import FileResponse, HTMLResponse
 from fastapi.staticfiles import StaticFiles
+from starlette.middleware.base import BaseHTTPMiddleware
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from pydantic import BaseModel, Field
 from typing import Optional
@@ -21,6 +22,15 @@ ADMIN_PASSWORD=os.getenv("CLOSSET_ADMIN_PASSWORD","Tahira@123")
 TOKEN_SECRET=os.getenv("CLOSSET_TOKEN_SECRET","change-this-secret-in-production")
 sessions={}
 app=FastAPI(title="Tahira's Closset API",version="2.0.0")
+
+class CacheStaticMiddleware(BaseHTTPMiddleware):
+    async def dispatch(self, request, call_next):
+        resp = await call_next(request)
+        p = request.url.path
+        if p.startswith('/assets/') or p.startswith('/uploads/'):
+            resp.headers['Cache-Control'] = 'public, max-age=86400'
+        return resp
+app.add_middleware(CacheStaticMiddleware)
 app.mount("/uploads",StaticFiles(directory=str(UPLOADS)),name="uploads")
 app.mount("/assets",StaticFiles(directory=str(ROOT/"frontend"/"assets")),name="assets")
 security=HTTPBearer(auto_error=False)
@@ -44,7 +54,7 @@ def init():
     CREATE TABLE IF NOT EXISTS products(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT NOT NULL,description TEXT DEFAULT '',category TEXT DEFAULT 'Uncategorized',price REAL NOT NULL DEFAULT 0,sale_price REAL,sku TEXT,stock INTEGER NOT NULL DEFAULT 0,sizes TEXT DEFAULT '',colors TEXT DEFAULT '',featured INTEGER DEFAULT 0,active INTEGER DEFAULT 1,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS images(id INTEGER PRIMARY KEY AUTOINCREMENT,product_id INTEGER,path TEXT,primary_image INTEGER DEFAULT 0);
     CREATE TABLE IF NOT EXISTS enquiries(id INTEGER PRIMARY KEY AUTOINCREMENT,name TEXT,contact TEXT,product_id INTEGER,message TEXT,status TEXT DEFAULT 'new',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
-    CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY AUTOINCREMENT,customer TEXT,contact TEXT,items TEXT,total REAL,status TEXT DEFAULT 'pending',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
+    CREATE TABLE IF NOT EXISTS orders(id INTEGER PRIMARY KEY AUTOINCREMENT,customer TEXT,contact TEXT,location TEXT DEFAULT '',note TEXT DEFAULT '',items TEXT,total REAL,status TEXT DEFAULT 'pending',source TEXT DEFAULT 'web',created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     CREATE TABLE IF NOT EXISTS settings(key TEXT PRIMARY KEY,value TEXT);
     CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT,action TEXT,detail TEXT,created_at TEXT DEFAULT CURRENT_TIMESTAMP);
     """)
@@ -141,6 +151,9 @@ def get_products(active_only=False, include_private=False):
     c=db()
     try:
         ensure_inventory_schema(c)
+        _ensure_col(c, "orders", "location", "location TEXT DEFAULT ''")
+        _ensure_col(c, "orders", "note", "note TEXT DEFAULT ''")
+        _ensure_col(c, "orders", "source", "source TEXT DEFAULT 'web'")
         migrate_existing_products_to_variants(c)
         rows=c.execute("SELECT * FROM products"+(" WHERE active=1" if active_only else "")+" ORDER BY created_at DESC").fetchall()
         out=[]
