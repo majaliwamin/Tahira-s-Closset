@@ -420,8 +420,8 @@ def settings():
     out.setdefault("whatsapp","https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2")
     out.setdefault("currency","MK")
     out.setdefault("contact","+265 893 312 761")
-    out.setdefault("location","Nkhotakota Boma, Malawi")
-    out.setdefault("map_url","https://www.google.com/maps/search/?api=1&query=Nkhotakota+Boma+Lake+Malawi")
+    out.setdefault("location","Tahira's Closset, Nkhotakota Boma District, Malawi")
+    out.setdefault("map_url","https://www.google.com/maps/search/?api=1&query=Tahira%27s+Closset+Nkhotakota+Boma+District+Lake+Malawi")
     out.setdefault("delivery","")
     out.setdefault("hero_phrases","Kodi inu zabwino ai?\nKodi mungakonde kuyesa chovala chanji lero?\nKodi mukufuna saizi yanji?\nKodi mukukonda mtundu wanji?\nKodi mukufuna zovala za mwambo uti?\nKodi tingakuthandizeni kusankha zovala?\nKodi mukufuna kuoneka motani lero?\nKodi mwayesa kale kalembedwe kameneka?\nKodi mukufuna kuti tikutumizireni zithunzi zina?\nKodi mukufuna kugula tsopano kapena mufunsa kaye?\nKodi mukufuna zovala za tsiku lapadera?\nTakulandirani ku Tahira's Closset.\nNdife okondwa kukuonani pano.\nMutha kusankha zomwe mukuzikonda.\nTili pano kukuthandizani nthawi iliyonse.\nValani zomwe zimakupatsani chidaliro.\nKhalani omasuka kutifunsa mafunso.\nTili ndi zovala zokongola kwa inu.\nSankhani kalembedwe komwe kakugwirizana nanu.\nTitha kukuthandizani kupeza saizi yoyenera.\nLumikizanani nafe pa WhatsApp mosavuta.\nTikuyankhani mwachangu momwe tingathere.\nOnani zatsopano zomwe zalowa lero.\nZovala zathu zasankhidwa mosamala.\nMutha kutitumizira uthenga nthawi iliyonse.\nTikukuthokozani chifukwa chotichezera.\nKhalani ndi tsiku labwino komanso lokongola.\nTiyeni tikuthandizeni kupeza zomwe mukufuna.\nMtundu uliwonse ukusonyeza umunthu wanu.\nTimayamikira kukoma kwanu.\nTikufunirani zabwino pamene mukusankha.")
     return out

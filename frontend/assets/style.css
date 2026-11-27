@@ -70,3 +70,12 @@ footer .wa-link .wa-icon{color:#25D366}
 @media (prefers-reduced-motion:reduce){#chichewa-text{transition:none;transform:none}}
 
 .loc-pin{width:24px;height:24px;display:inline-block;vertical-align:middle;color:#EA4335;flex:0 0 auto}.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+
+.location-card{margin:16px 0 20px;max-width:520px;border:1px solid #eadfdc;border-radius:12px;overflow:hidden;background:#fff}
+.location-card a{display:grid;grid-template-columns:140px 1fr;text-decoration:none;color:inherit}
+.location-card-img{width:100%;height:140px;object-fit:cover;display:block}
+.location-card-body{padding:14px}
+.location-card-body strong{display:block;color:#2b1d1f;font-size:16px;margin-bottom:4px}
+.location-card-body p{margin:0 0 8px;color:#5a4b4e;font-size:13px;line-height:1.5}
+.loc-cta{color:#1a73e8;font-weight:700;font-size:13px}
+@media(max-width:560px){.location-card a{grid-template-columns:1fr}.location-card-img{height:180px}}
