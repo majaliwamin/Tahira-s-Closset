@@ -95,8 +95,7 @@ body{background:var(--bg);color:var(--text)}
 .topbar{background:linear-gradient(100deg,var(--header1) 0%, color-mix(in srgb,var(--header1) 70%, #000) 35%, var(--header2) 68%, var(--header3) 100%)}
 .btn.primary{background:var(--accent)}
 .btn.primary:hover{filter:brightness(.92)}
-.theme-select{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:6px;padding:8px 10px;font-weight:700;font-size:13px;max-width:170px}
-.theme-select option{color:#222}
+.theme-toggle{background:rgba(255,255,255,.12);color:#fff;border:1px solid rgba(255,255,255,.35);border-radius:999px;width:40px;height:40px;display:inline-flex;align-items:center;justify-content:center;cursor:pointer;padding:0}.theme-toggle svg{width:20px;height:20px;display:block}.theme-toggle:hover{background:rgba(255,255,255,.22)}
 [data-theme="dark"] .product-info h3,[data-theme="dark"] .product-info div,[data-theme="dark"] .product-info .muted.small{color:#f3edf5 !important}
 [data-theme="dark"] .admin-table th{background:#2a2331;color:#f3edf5}
 [data-theme="dark"] .filters input,[data-theme="dark"] .filters select,[data-theme="dark"] input,[data-theme="dark"] select,[data-theme="dark"] textarea{background:#251f2b;color:#f3edf5;border-color:#3a3142}

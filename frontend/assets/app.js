@@ -7,10 +7,11 @@ function img(p){let i=p.images?.[0]?.path;return i?`<img loading="lazy" src="${i
 function stockStatus(v){let q=Number(v.stock_quantity??v.stock??0),t=Number(v.low_stock_threshold??3);if(q<=0)return 'OUT_OF_STOCK'; if(q<=t)return 'LOW_STOCK'; return 'IN_STOCK'}
 function statusBadge(s){let map={IN_STOCK:['In stock','ok'],LOW_STOCK:['Low stock','warn'],OUT_OF_STOCK:['Out of stock','bad']};let [l,c]=map[s]||[s,''];return `<span class="badge ${c}">${l}</span>`}
 
-function applyTheme(theme){const t=theme||localStorage.getItem('tc_theme')||'default';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tc_theme',t);const sel=document.getElementById('theme-select'); if(sel) sel.value=t;}
+const THEMES=['default','dark','green','purple-blue','red'];
+function applyTheme(theme){const t=theme||localStorage.getItem('tc_theme')||'default';document.documentElement.setAttribute('data-theme',t);localStorage.setItem('tc_theme',t);const btn=document.getElementById('theme-toggle'); if(btn){btn.title='Theme: '+t; btn.setAttribute('aria-label','Change theme (current: '+t+')');}}
 document.addEventListener("DOMContentLoaded",async()=>{
   applyTheme();
-  document.getElementById('theme-select')?.addEventListener('change',e=>applyTheme(e.target.value));
+  document.getElementById('theme-toggle')?.addEventListener('click',()=>{const cur=localStorage.getItem('tc_theme')||'default'; const i=THEMES.indexOf(cur); applyTheme(THEMES[(i+1)%THEMES.length]);});
   document.getElementById("hamb")?.addEventListener("click",()=>document.getElementById("nav")?.classList.toggle("show"));
   document.getElementById("year")&&(document.getElementById("year").textContent=new Date().getFullYear());
   initHeroSlider();
