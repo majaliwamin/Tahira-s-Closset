@@ -411,7 +411,30 @@ def create_order(payload:dict):
     if not payload.get("customer") or not payload.get("contact") or not payload.get("items"):raise HTTPException(400,"Please complete your order details")
     c=db()
     try:
-        cur=c.execute("INSERT INTO orders(customer,contact,items,total) VALUES(?,?,?,?)",(payload["customer"],payload["contact"],json.dumps(payload["items"]),float(payload.get("total",0))));c.commit();return {"id":cur.lastrowid,"status":"pending"}
+        ensure_inventory_schema(c)
+        items=payload["items"]
+        calc_total=0.0
+        for i in items:
+            qty=max(1,int(i.get("qty",1)))
+            pid=int(i["id"])
+            vid=i.get("variant_id")
+            prod=c.execute("SELECT id,stock,active,sale_price,price FROM products WHERE id=?",(pid,)).fetchone()
+            if not prod or int(prod["active"])!=1:
+                raise HTTPException(400,"An item in your bag is unavailable")
+            if vid:
+                v=c.execute("SELECT id,stock_quantity,selling_price,is_active FROM inventory_variants WHERE id=? AND product_id=?",(int(vid),pid)).fetchone()
+                if not v or int(v["is_active"])!=1 or int(v["stock_quantity"])<qty:
+                    raise HTTPException(400,"A selected size/colour is unavailable")
+                calc_total += float(v["selling_price"] if v["selling_price"] is not None else (prod["sale_price"] if prod["sale_price"] is not None else prod["price"]))*qty
+            else:
+                if int(prod["stock"] or 0) < qty:
+                    raise HTTPException(400,"An item in your bag is unavailable")
+                calc_total += float(prod["sale_price"] if prod["sale_price"] is not None else prod["price"])*qty
+        total=float(payload.get("total",calc_total))
+        cur=c.execute("INSERT INTO orders(customer,contact,location,note,items,total,source) VALUES(?,?,?,?,?,?,?)",(payload["customer"],payload["contact"],payload.get("location",""),payload.get("note",""),json.dumps(items),total,payload.get("source","web")))
+        oid=cur.lastrowid
+        c.commit()
+        return {"id":oid,"status":"pending"}
     finally:
         c.close()
 
@@ -431,6 +454,7 @@ def settings():
     out.setdefault("closset_name","TAHIRA'S CLOSSET")
     out.setdefault("tagline","Wear Your Style. Discover Your Elegance.")
     out.setdefault("whatsapp","https://chat.whatsapp.com/KKDXAzRiifw4FSNPM8qskX?s=sw&p=a&mlu=4&ilr=4&iam=2")
+    out.setdefault("whatsapp_number","+265893312761")
     out.setdefault("currency","MK")
     out.setdefault("contact","+265 893 312 761")
     out.setdefault("location","Tahira's Closset, Nkhotakota Boma District, Malawi")

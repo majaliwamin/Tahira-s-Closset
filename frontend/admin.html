@@ -81,7 +81,7 @@
   <div class="dashboard-grid"><div class="panel"><h3>Out of stock</h3><div id="out-stock-list" class="table-wrap"></div></div><div class="panel"><h3>Low stock</h3><div id="low-stock-list" class="table-wrap"></div></div></div>
 </section>
 
-<section id="orders" class="admin-section"><div class="section-heading"><h2>Order requests</h2><div class="header-actions"><button class="btn" onclick="adminOrders()">Refresh</button></div></div>
+<section id="orders" class="admin-section"><div class="section-heading"><h2>Order requests</h2><div class="header-actions"><button class="btn" onclick="exportOrdersCSV()">Export CSV</button><button class="btn" onclick="adminOrders()">Refresh</button></div></div>
 <div class="panel"><p class="muted" style="margin:0">Review customer order requests, confirm availability, and update order status. Use WhatsApp/contact details to follow up quickly.</p></div>
 <div id="order-admin"></div></section>
 <section id="enquiries" class="admin-section"><div class="section-heading"><h2>Customer enquiries</h2><div class="header-actions"><button class="btn" onclick="adminEnquiries()">Refresh</button></div></div>
@@ -104,7 +104,8 @@
 <form id="settings-form" class="settings-grid form-panel">
 <label>Closset name<input name="closset_name"></label>
 <label>Tagline<input name="tagline"></label>
-<label>WhatsApp link or number<input name="whatsapp" placeholder="WhatsApp link or number"></label>
+<label>WhatsApp number (wa.me, preferred)<input name="whatsapp_number" placeholder="+265893312761"></label>
+<label>WhatsApp group/community link (fallback)<input name="whatsapp" placeholder="https://chat.whatsapp.com/..."></label>
 <label>Contact information<input name="contact"></label>
 <label>Location<input name="location" placeholder="Tahira's Closset, Tahira's Closset, Nkhotakota Boma District District"></label>
 <label>Google Maps link<input name="map_url" placeholder="https://www.google.com/maps/search/?api=1&query=Nkhotakota+Boma+Lake+Malawi"></label>
