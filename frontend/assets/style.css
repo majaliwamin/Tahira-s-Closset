@@ -64,6 +64,7 @@ footer .wa-link .wa-icon{color:#25D366}
 @media(max-width:650px){.detail-gallery{grid-template-columns:1fr 1fr}.product-actions .btn{white-space:normal}}
 
 .chichewa-rotator{min-height:32px;margin:6px 0 14px;color:#74142f;font-size:clamp(16px,2.1vw,24px);font-weight:700;line-height:1.35}
+[data-theme="dark"] .chichewa-rotator,[data-theme="dark"] #chichewa-text{color:#fff !important;font-weight:800;text-shadow:0 1px 2px rgba(0,0,0,.35)}
 #chichewa-text{display:inline-block;transition:opacity .28s ease,transform .28s ease;opacity:1;transform:translateY(0)}
 #chichewa-text.chichewa-out{opacity:0;transform:translateY(8px)}
 #chichewa-text.chichewa-in{opacity:1;transform:translateY(0)}
