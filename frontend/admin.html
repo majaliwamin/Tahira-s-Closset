@@ -12,7 +12,7 @@
 <a href="#settings" data-section="settings" class="nav-link">Settings</a>
 <a href="#" onclick="logout();return false;">Sign out</a></aside>
 <main id="main-content" class="admin-main">
-<header class="admin-header"><button class="hamb" onclick="document.getElementById('sidebar').classList.toggle('show')">☰</button><div><p class="eyebrow">CLOSSET MANAGEMENT</p><h1 id="admin-title">Inventory Dashboard</h1></div><div class="header-actions"><button class="btn" onclick="refreshCurrentSection()">Refresh</button><button class="btn primary" onclick="showProductForm()">＋ Add product</button></div></header>
+<header class="admin-header"><button class="hamb" onclick="document.getElementById('sidebar').classList.toggle('show')">☰</button><button id="admin-back" class="btn admin-back" onclick="adminBack()" aria-label="Back to landing page">← Back</button><div><p class="eyebrow">CLOSSET MANAGEMENT</p><h1 id="admin-title">Inventory Dashboard</h1></div><div class="header-actions"><button class="btn" onclick="refreshCurrentSection()">Refresh</button><button class="btn primary" onclick="showProductForm()">＋ Add product</button></div></header>
 
 <section id="dashboard" class="admin-section active">
   <div class="metrics" id="metrics"></div>
