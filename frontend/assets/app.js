@@ -57,7 +57,7 @@ async function initChichewaRotator(reduce){
   set(0,false);
   if(reduce || lines.length<2) return;
   if(window._chichewaTimer) clearInterval(window._chichewaTimer);
-  window._chichewaTimer=setInterval(()=>{ i=(i+1)%lines.length; set(i,true); },3200);
+  window._chichewaTimer=setInterval(()=>{ i=(i+1)%lines.length; set(i,true); },6500);
 }
 
 let homeProductsCache=null;
